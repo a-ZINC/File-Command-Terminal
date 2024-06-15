@@ -1,0 +1,47 @@
+import fs from "node:fs/promises";
+import { Buffer } from "node:buffer";
+import { command, commandFilePath } from "./commandConstant";
+import { createFile } from "../controller/createFile";
+import { appendFile } from "../controller/appendFile";
+
+export const readFile = async() => {
+    const readFileHandle = await fs.open(commandFilePath, "r+");
+    const { size } = await readFileHandle.stat();
+    const buffer = Buffer.alloc(size);
+
+    await readFileHandle.read(buffer, 0, size, 0);
+    const bufferString = buffer.toString("hex");
+
+    if(bufferString.endsWith("0a")){
+        const lastCommandHexString = buffer.toString("hex").split("0a").at(-2)?.trim();
+        const buff = Buffer.from("ffff","utf-8");
+        const readData = Buffer.from(lastCommandHexString ? lastCommandHexString:"", "hex").toString("utf-8");
+
+        // create a file
+        // create /Users/user_name/__/__/file.txt
+        if(readData && readData.includes(command.CREATE_FILE)) {
+            const path = readData.substring(command.CREATE_FILE.length + 1);
+            createFile(path);
+        }
+
+        // append content to file
+        // append /Users/user_name/__/__/file.txt : "Content"
+        if(readData && readData.includes(command.APPEND_FILE)) {
+            if(readData.includes(':')){
+                const index = readData.indexOf(":");
+                const path = readData.substring(command.APPEND_FILE.length + 1, index-1);
+                const content = readData.substring(index+1);
+                console.log(path,content);
+                appendFile(path, content);
+            } else {
+                appendFile(commandFilePath, `~ incorrect command \n`);
+            }
+        }
+
+        
+
+    }
+    
+
+    readFileHandle.close();
+}
