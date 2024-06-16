@@ -4,7 +4,6 @@ import { commandFilePath } from "../utils/commandConstant";
 export const createFile = async(path: string) => {
     // const newFileHandle = await fs.open(path, "w");    write over already exits file not error if already exist
     // newFileHandle.close();
-    console.log(path);
     try{
         const newFileHandle = await fs.open(path, "wx");
         newFileHandle.close();
